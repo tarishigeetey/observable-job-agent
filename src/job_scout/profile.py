@@ -1,10 +1,4 @@
-"""Extract a structured candidate profile from CV text.
-
-This is a preprocessing step that runs *before* the job-finding graph: the graph
-takes the resulting ``Profile`` as input and focuses on searching and ranking
-jobs. Keeping extraction out of the graph keeps the graph about one thing —
-finding jobs — and lets a caller (like the UI) extract once and reuse it.
-"""
+﻿"""Extract a structured candidate profile from CV text."""
 
 from __future__ import annotations
 
@@ -32,26 +26,18 @@ CV text:
 """
 
 
-def extract_profile(
-    cv_text: str, *, thread_id: str | None = None, tags: list[str] | None = None
-) -> Profile:
-    """Extract a structured profile from CV text with a single LLM call.
-
-    Pass ``thread_id`` and ``tags`` to trace the call in Opik (grouped with the
-    search run on the same thread).
-    """
-    from job_scout.tracing import get_tracer
-
+def extract_profile(cv_text: str, *, thread_id: str | None = None, tags: list[str] | None = None) -> Profile:
+    """Extract a structured profile from CV text with a single LLM call."""
     settings = get_settings()
-    model = get_chat_model(
-        settings.scout_model, temperature=0.0
-    ).with_structured_output(Profile)
+    model = get_chat_model(settings.scout_model, temperature=0.0).with_structured_output(Profile)
 
-    tracer = get_tracer(thread_id, tags or ["extract"]) if thread_id else None
+    tracer = None
+    if thread_id:
+        from job_scout.tracing import get_tracer
+        tracer = get_tracer(thread_id, tags or ["extract"])
+
     config = {"callbacks": [tracer]} if tracer else {}
-    profile: Profile = model.invoke(
-        EXTRACT_PROFILE_PROMPT.format(cv_text=cv_text), config=config
-    )
+    profile: Profile = model.invoke(EXTRACT_PROFILE_PROMPT.format(cv_text=cv_text), config=config)
     if tracer:
         tracer.flush()
     return profile

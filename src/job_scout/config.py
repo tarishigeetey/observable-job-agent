@@ -1,9 +1,4 @@
-"""Application configuration loaded from the environment and ``.env``.
-
-A single ``Settings`` object holds every setting. Secrets use ``SecretStr`` so
-they never appear in logs or trace metadata by accident. Each field's ``.env``
-name is documented in ``.env.example``.
-"""
+﻿"""Application configuration loaded from the environment and .env."""
 
 from __future__ import annotations
 
@@ -14,7 +9,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Runtime configuration, read once from the environment or ``.env``."""
+    """Runtime configuration, read once from the environment or .env."""
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -27,6 +22,7 @@ class Settings(BaseSettings):
     scout_tailor_model: str = Field(default="openai:gpt-4o-mini", alias="SCOUT_TAILOR_MODEL")
 
     openai_api_key: SecretStr = Field(default=SecretStr(""), alias="OPENAI_API_KEY")
+    groq_api_key: SecretStr = Field(default=SecretStr(""), alias="GROQ_API_KEY")
 
     opik_api_key: SecretStr = Field(default=SecretStr(""), alias="OPIK_API_KEY")
     opik_workspace: str = Field(default="", alias="OPIK_WORKSPACE")
@@ -38,20 +34,6 @@ class Settings(BaseSettings):
     adzuna_app_key: SecretStr = Field(default=SecretStr(""), alias="ADZUNA_APP_KEY")
 
     max_llm_calls_per_run: int = Field(default=25, alias="MAX_LLM_CALLS_PER_RUN")
-
-    @field_validator("opik_workspace", "opik_project_name", "scout_model", "scout_tailor_model", mode="before")
-    @classmethod
-    def _drop_inline_comment(cls, value: object) -> object:
-        """Treat a value that is only a ``# comment`` as empty.
-
-        Guards the common ``.env`` mistake of leaving a key blank but keeping its
-        trailing comment, which some parsers read as the value.
-        """
-        if isinstance(value, str):
-            value = value.strip()
-            if value.startswith("#"):
-                return ""
-        return value
 
     @property
     def has_jsearch(self) -> bool:
